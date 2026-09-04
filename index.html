@@ -563,6 +563,7 @@
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-label" id="progressLabel">0 / 30 answered</div>
     <button type="button" class="palette-toggle" id="paletteToggleBtn"><span>Show all numbers</span></button>
+    <button type="button" class="palette-toggle" id="manualFullscreenBtn"><span>⛶ Fullscreen</span></button>
     <button type="button" class="hide-bar-btn hide-bar-row" id="hideBarBtn"><span>Hide Bar</span></button>
   </div>
   <div class="wrap">
@@ -769,25 +770,36 @@ const DATA = [
 
 
 let FLAT = [];
-function buildFlat(){
-  FLAT = [];
-  DATA.forEach(section=>{
-    const qs = section.questions.slice();
-    qs.forEach(q=>{
-      const qCopy = Object.assign({}, q, {_section:section});
-      if(Array.isArray(q.options)){
-        qCopy.options = q.options.slice();
-      }
-      FLAT.push(qCopy);
-    });
-  });
-}
 function shuffle(arr){
   for(let i=arr.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
     [arr[i],arr[j]]=[arr[j],arr[i]];
   }
   return arr;
+}
+function buildFlat(){
+  FLAT = [];
+  const letters = ['A','B','C','D','E','F'];
+  DATA.forEach(section=>{
+    const qs = section.questions.slice();
+    qs.forEach(q=>{
+      const qCopy = Object.assign({}, q, {_section:section});
+      if(Array.isArray(q.options)){
+        if(q.type==='multi'){
+          // Shuffle the option order so the correct-answer keys aren't always
+          // in the same predictable spots, then relabel A/B/C/... to match.
+          const correctTexts = q.options.filter(o=>q.correct.includes(o.k)).map(o=>o.t);
+          const shuffled = shuffle(q.options.slice());
+          const relabeled = shuffled.map((o,i)=>({k:letters[i], t:o.t}));
+          qCopy.options = relabeled;
+          qCopy.correct = relabeled.filter(o=>correctTexts.includes(o.t)).map(o=>o.k);
+        } else {
+          qCopy.options = q.options.slice();
+        }
+      }
+      FLAT.push(qCopy);
+    });
+  });
 }
 
 let answers = {};
@@ -1445,8 +1457,19 @@ function requestExamFullscreen(){
   if(req){ req.call(el).catch(()=>{}); }
 }
 
+function exitAppFullscreen(){
+  const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+  if(exitFs){ exitFs.call(document).catch(()=>{}); }
+}
+
 function isFullscreenActive(){
   return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+
+function updateManualFullscreenButton(){
+  const btn = document.getElementById('manualFullscreenBtn');
+  if(!btn) return;
+  btn.querySelector('span').textContent = isFullscreenActive() ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
 }
 
 function updateViolationBadge(){
@@ -1495,6 +1518,14 @@ document.getElementById('fullscreenBtn').addEventListener('click', ()=>{
   requestExamFullscreen();
 });
 
+document.getElementById('manualFullscreenBtn').addEventListener('click', ()=>{
+  if(isFullscreenActive()){
+    exitAppFullscreen();
+  } else {
+    requestExamFullscreen();
+  }
+});
+
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){
     registerViolation('kamu berpindah tab atau meminimalkan jendela');
@@ -1516,6 +1547,7 @@ window.addEventListener('blur', ()=>{
       registerViolation('kamu keluar dari mode fullscreen');
     }
     updateFullscreenButton();
+    updateManualFullscreenButton();
   });
 });
 
