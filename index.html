@@ -102,6 +102,20 @@
   }
   .palette-toggle:hover{background:#f3f1ea; border-color:#d7d3c4;}
 
+  .hide-bar-btn{
+    font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600;
+    background:var(--navy); border:1px solid var(--navy); color:#fff;
+    padding:6px 12px; border-radius:99px; cursor:pointer;
+    transition:background .15s ease, opacity .15s ease;
+    display:flex; align-items:center; gap:6px; margin-left:auto; flex-shrink:0;
+  }
+  .hide-bar-btn:hover{background:#232849;}
+  .progress-shell.bar-hidden .progress-inner > *:not(.hide-bar-row),
+  .progress-shell.bar-hidden .palette-panel{ display:none !important; }
+  .progress-shell.bar-hidden .progress-inner{ justify-content:flex-end; }
+  .hide-bar-row{ display:flex; margin-left:auto; }
+  .progress-shell.bar-hidden{ padding:6px 0; }
+
   .timer-badge{
     font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--ink);
     background:#eef0fb; border:1px solid #c9cdf0; padding:6px 12px; border-radius:99px; white-space:nowrap;
@@ -549,6 +563,7 @@
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-label" id="progressLabel">0 / 30 answered</div>
     <button type="button" class="palette-toggle" id="paletteToggleBtn"><span>Show all numbers</span></button>
+    <button type="button" class="hide-bar-btn hide-bar-row" id="hideBarBtn"><span>Hide Bar</span></button>
   </div>
   <div class="wrap">
     <div class="palette-panel" id="palettePanel">
@@ -1785,6 +1800,12 @@ document.getElementById('backToLoginBtn').addEventListener('click', ()=>{
   document.getElementById('appMain').style.display = 'none';
   document.getElementById('gateScreen').style.display = 'flex';
   window.scrollTo({top:0});
+});
+
+document.getElementById('hideBarBtn').addEventListener('click', function(){
+  const shell = document.querySelector('.progress-shell');
+  const hidden = shell.classList.toggle('bar-hidden');
+  this.querySelector('span').textContent = hidden ? 'Show Bar' : 'Hide Bar';
 });
 
 document.getElementById('gateSubmitBtn').addEventListener('click', checkGate);
